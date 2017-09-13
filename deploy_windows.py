@@ -6,6 +6,9 @@ import os
 import sys
 
 import requests
+import time
+
+from pyproxmox import prox_auth, pyproxmox
 
 
 def error(msg):
@@ -44,8 +47,26 @@ def fetch_exe_from_jenkins():
     return file_path
 
 
+def rollback_vm():
+    vm_id = int(os.environ.get("PROXMOX_VMID"))
+    a = prox_auth(os.environ.get("PROXMOX_HOST"), os.environ.get("PROXMOX_USER"), os.environ.get("PROXMOX_PASS"))
+    b = pyproxmox(a)
+    rollback_upid = b.rollbackVirtualMachine("proxmox", vm_id, "win10_without_ram")['data']
+
+    status = b.getNodeTaskStatusByUPID("proxmox", rollback_upid)['data']['status']
+    while status == u"running":
+        time.sleep(0.5)
+        status = b.getNodeTaskStatusByUPID("proxmox", rollback_upid)['data']['status']
+
+    print "rollback done, restarting machine"
+    b.startVirtualMachine("proxmox", vm_id)
+
+
 # Step 1: fetch the latest Tribler installer from Jenkins
 installer_path = fetch_exe_from_jenkins()
 
 # Step 2: run the installer
 os.system("%s /S" % installer_path)
+
+# Step 3: rollback the VM
+#rollback_vm()
