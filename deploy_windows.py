@@ -22,7 +22,7 @@ def fetch_exe_from_jenkins():
     First, it checks the id of the latest build.
     Next, it fetches the artifacts from that build and saves the .exe to the workspace.
     """
-    build_json = json.loads(requests.get("https://jenkins.tribler.org/job/Build-Tribler_Win64_next/api/json").text)
+    build_json = json.loads(requests.get("https://jenkins.tribler.org/job/pers/job/Build-Tribler_Win64_devos50/api/json").text)
     last_build = build_json['lastCompletedBuild']['number']
     print "Last build ID: %d" % last_build
 
@@ -68,5 +68,9 @@ installer_path = fetch_exe_from_jenkins()
 # Step 2: run the installer
 os.system("%s /S" % installer_path)
 
+time.sleep(5)
+
+# TODO run Tribler + check whether it's up and running
+
 # Step 3: rollback the VM
-#rollback_vm()
+rollback_vm()
