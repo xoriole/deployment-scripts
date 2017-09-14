@@ -10,7 +10,7 @@ from pyproxmox import prox_auth, pyproxmox
 def rollback_vm(vm_id):
     a = prox_auth(os.environ.get("PROXMOX_HOST"), os.environ.get("PROXMOX_USER"), os.environ.get("PROXMOX_PASS"))
     b = pyproxmox(a)
-    rollback_upid = b.rollbackVirtualMachine("proxmox", vm_id, "win10_without_ram")['data']
+    rollback_upid = b.rollbackVirtualMachine("proxmox", vm_id, os.environ.get("PROXMOX_ROLLBACK_STATE"))['data']
 
     status = b.getNodeTaskStatusByUPID("proxmox", rollback_upid)['data']['status']
     while status == u"running":
