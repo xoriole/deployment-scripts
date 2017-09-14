@@ -42,7 +42,7 @@ else:
     print "Starting tribler"
     subprocess.Popen([TRIBLER_EXECUTABLE])
     # wait few seconds before it starts
-    time.sleep(20)
+    time.sleep(30)
     # check pid if tribler has started
     tribler_pids = get_pid("tribler.exe")
     if len(tribler_pids) == 0:
@@ -51,13 +51,18 @@ else:
 
 # take few screenshots of running tribler application
 WORKSPACE_DIR=os.environ.get("WORKSPACE") or "C:\\Users\\tribler\\"
+WORKSPACE_SCREENSHOT_DIR = os.path.join(WORKSPACE_DIR,"screenshots")
+if not os.path.exists(WORKSPACE_SCREENSHOT_DIR):
+    print "Creating screenshot directory"
+    os.makedirs(WORKSPACE_SCREENSHOT_DIR)
+
 with mss.mss() as sct:
     for i in range(1,10):
         print "Taking screenshot %d/%d" % (i,10)
-        file_path = os.path.join(WORKSPACE_DIR,"screenshot-"+time.strftime("%Y%m%d%H%M%S-")+str(i)+".png")
+        file_path = os.path.join(WORKSPACE_SCREENSHOT_DIR,"screenshot-"+time.strftime("%Y%m%d%H%M%S-")+str(i)+".png")
         sct.shot(output=file_path)
-        # wait 5 seconds before new screenshot
-        time.sleep(5)
+        # wait 10 seconds before new screenshot
+        time.sleep(10)
 
 # let tribler run for a minute and stop it
 time.sleep(60)
