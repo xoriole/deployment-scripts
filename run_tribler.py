@@ -28,6 +28,13 @@ if not os.path.exists(TRIBLER_EXECUTABLE):
     print "Tribler executable file not found"
     sys.exit(-1)
 
+# There should be .Tribler directory in %APPDATA% directory if instalation was successful.
+print "Checking if .Tribler directory exists"
+TRIBLER_DOT_DIR = os.path.join(os.getenv('APPDATA'),".Tribler")
+if not os.path.exists(TRIBLER_DOT_DIR):
+    print ".Tribler directory does not exist. Installation was not successful"
+    sys.exit(-1)
+
 tribler_pids = get_pid("tribler.exe")
 if len(tribler_pids) > 0:
     print "Tribler is already running"
