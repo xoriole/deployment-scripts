@@ -6,6 +6,7 @@ import signal
 import subprocess
 import time
 import sys
+import mss
 
 def get_pid(process_name):
     return [item.split()[1] for item in os.popen('tasklist').read().splitlines()[4:] if process_name in item.split()]
@@ -40,6 +41,16 @@ else:
     if len(tribler_pids) == 0:
         print "Tribler could not start properly"
         sys.exit(-1)
+
+# take few screenshots of running tribler application
+WORKSPACE_DIR=os.environ.get("WORKSPACE") or "C:\\Users\\tribler\\"
+with mss.mss() as sct:
+    for i in range(1,10):
+        print "Taking screenshot %d/%d" % (i,10)
+        file_path = os.path.join(WORKSPACE_DIR,"screenshot-"+time.strftime("%Y%m%d%H%M%S-")+str(i)+".png")
+        sct.shot(output=file_path)
+        # wait 5 seconds before new screenshot
+        time.sleep(5)
 
 # let tribler run for a minute and stop it
 time.sleep(60)
