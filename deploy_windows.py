@@ -20,11 +20,12 @@ def fetch_exe_from_jenkins():
     First, it checks the id of the latest build.
     Next, it fetches the artifacts from that build and saves the .exe to the workspace.
     """
-    build_json = json.loads(requests.get("https://jenkins.tribler.org/job/pers/job/Build-Tribler_Win64_devos50/api/json").text)
+    base_job_url = os.environ.get("JENKINS_JOB_URL")
+    build_json = json.loads(requests.get("/api/json" % base_job_url).text)
     last_build = build_json['lastCompletedBuild']['number']
     print "Last build ID: %d" % last_build
 
-    job_url = 'https://jenkins.tribler.org/job/pers/job/Build-Tribler_Win64_devos50/%d' % last_build
+    job_url = '%s/%d' % (base_job_url, last_build)
     last_build_json = json.loads(requests.get("%s/api/json" % job_url).text)
     if len(last_build_json['artifacts']) == 0:
         error("No artifacts found!")

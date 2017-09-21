@@ -57,7 +57,7 @@ if not os.path.exists(WORKSPACE_SCREENSHOT_DIR):
     os.makedirs(WORKSPACE_SCREENSHOT_DIR)
 
 with mss.mss() as sct:
-    for i in range(1,10):
+    for i in range(1,11):
         print "Taking screenshot %d/%d" % (i,10)
         file_path = os.path.join(WORKSPACE_SCREENSHOT_DIR,"screenshot-"+time.strftime("%Y%m%d%H%M%S-")+str(i)+".png")
         sct.shot(output=file_path)
