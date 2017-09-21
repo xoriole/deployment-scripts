@@ -21,7 +21,11 @@ def fetch_exe_from_jenkins():
     Next, it fetches the artifacts from that build and saves the .exe to the workspace.
     """
     base_job_url = os.environ.get("JENKINS_JOB_URL")
-    build_json = json.loads(requests.get("/api/json" % base_job_url).text)
+    if not base_job_url:
+        print "Jenkins job URL for the builder is not specified."
+        sys.exit(-1)
+
+    build_json = json.loads(requests.get("%s/api/json" % base_job_url).text)
     last_build = build_json['lastCompletedBuild']['number']
     print "Last build ID: %d" % last_build
 
