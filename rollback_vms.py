@@ -2,10 +2,23 @@
 This script rollbacks specific VMs.
 """
 import os
+import sys
 
 import time
 from pyproxmox import prox_auth, pyproxmox
 
+def print_env_variables():
+    host = os.environ.get("PROXMOX_HOST")
+    user = os.environ.get("PROXMOX_USER")
+    password = os.environ.get("PROXMOX_PASS")
+    rollback_state = os.environ.get("PROXMOX_ROLLBACK_STATE")
+    vmids = os.environ.get("PROXMOX_VMIDS")
+
+    print "Host: %s" % host
+    print "User: %s" % user
+    print "Password: %s" % password
+    print "Rollback State : %s" % rollback_state
+    print "VM IDs: %s" % vmids
 
 def rollback_vm(vm_id):
     a = prox_auth(os.environ.get("PROXMOX_HOST"), os.environ.get("PROXMOX_USER"), os.environ.get("PROXMOX_PASS"))
@@ -20,6 +33,11 @@ def rollback_vm(vm_id):
     print "rollback done, restarting machine"
     b.startVirtualMachine("proxmox", vm_id)
 
+if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == "show_env":
+        # Print environment variables for debugging
+        print_env_variables()
 
-for vm_id in os.environ.get("PROXMOX_VMIDS").split(','):
-    rollback_vm(int(vm_id))
+    # Rollback the vm state
+    for vm_id in os.environ.get("PROXMOX_VMIDS").split(','):
+        rollback_vm(int(vm_id))
