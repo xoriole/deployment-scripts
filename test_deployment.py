@@ -144,7 +144,7 @@ if __name__ == '__main__':
 
     # Check if .Tribler directory is present
 
-    check_dot_tribler_dir
+    check_dot_tribler_dir()
 
     # Wait few seconds
 
