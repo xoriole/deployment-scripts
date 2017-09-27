@@ -60,17 +60,37 @@ def fetch_executable_from_jenkins():
 
     return file_path
 
+
 # Step 1: fetch the latest Tribler installer from Jenkins
 installer_path = fetch_executable_from_jenkins()
 
-# Step 2: Install Tribler and its dependencies
+# Step 1.1: Remove dpkg lock if exists
 tribler_password = os.environ.get('TRIBLER_PASSWORD')
-install_tribler_script = 'echo %s| sudo -S dpkg -i %s' \
-    % (tribler_password, installer_path)
-install_dependencies_script = 'echo %s| sudo -S apt-get install -f -y' \
-    % tribler_password
-os.system(install_tribler_script)
-os.system(install_dependencies_script)
+if os.path.exists("/var/lib/dpkg/lock"):
+    dpkg_unlock_script = "echo %s| sudo -S rm /var/lib/dpkg/lock" % tribler_password
+    os.system(dpkg_unlock_script)
+
+# Step 2: Install Tribler system dependencies
+system_dependencies = ["libav-tools", "libsodium18", "libx11-6", "python-apsw", "python-cherrypy3", "python-crypto",
+                       "python-cryptography", "python-decorator", "python-feedparser", "python-leveldb",
+                       "python-libtorrent", "python-matplotlib", "python-m2crypto", "python-netifaces", "python-pil",
+                       "python-pyasn1", "python-twisted", "python2.7", "vlc", "python-chardet", "python-configobj",
+                       "python-pyqt5", "python-pyqt5.qtsvg", "python-meliae"]
+dependency_script = "echo %s| sudo -S apt-get install -y %s" % (tribler_password, " ".join(system_dependencies))
+os.system(dependency_script)
+
+# Step 3: Install pip modules
+pip_modules = ["psutil"]
+pip_script = "echo %s| sudo -S pip install %s" % (tribler_password, " ".join(pip_modules))
+os.system(pip_script)
+
+# Step 4: Install tribler.deb file
+tribler_script = "echo %s| sudo -S dpkg -i %s" % (tribler_password, installer_path)
+os.system(tribler_script)
+
+# Step 5: Install any missing dependencies
+missing_dependency_script = "echo %s| sudo -S apt-get install -f -y" % tribler_password
+os.system(missing_dependency_script)
 
 print 'Installed Tribler...'
 time.sleep(5)
