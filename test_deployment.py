@@ -2,7 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-This script checks if Tribler is installed and tries to run it if it is not already running
+This script performs the following deployment tests for Tribler:
+- Checks if Tribler is properly installed & necessary files exists
+- Checks Tribler starts properly
+- Check Tribler Core is running
+- Checks .Tribler state directory is created
+- Takes screenshots of the running state
+- Kills Tribler at the end
 """
 
 import json
@@ -17,13 +23,15 @@ import requests
 
 
 def error(msg):
+    """ Prints error and exits """
     print 'ERROR: %s' % msg
     sys.exit(-1)
 
 
 # Assuming the defaults
-
 DEFAULT_PORT = 8085
+WORKSPACE_DIR = os.environ.get('WORKSPACE')
+WORKSPACE_SCREENSHOT_DIR = os.path.join(WORKSPACE_DIR, 'screenshots')
 
 if sys.platform == 'win32':
     TRIBLER_DIR = r"C:\Program Files\Tribler"
@@ -38,6 +46,7 @@ elif sys.platform == 'linux2':
 
 
 def get_tribler_pid():
+    """ Returns the pid of running Tribler python process """
     if sys.platform == 'linux2':
         pids = []
         for proc in subprocess.check_output(['ps', '-ef']).splitlines():
@@ -45,16 +54,19 @@ def get_tribler_pid():
                 pids += [int(proc.split()[1])]
         return pids
     elif sys.platform == 'win32':
-        return [item.split()[1] for item in os.popen('tasklist').read().splitlines()[4:] if 'tribler.exe' in item.split()]
+        return [item.split()[1] for item in os.popen('tasklist').read().splitlines()[4:] if
+                'tribler.exe' in item.split()]
 
 
 def kill_tribler():
+    """ Kills the running Tribler process """
     pids = get_tribler_pid()
     for pid in pids:
         os.kill(int(pid), signal.SIGTERM)
 
 
 def check_tribler_directory():
+    """ Checks if Tribler installation directory is present or not """
     if not os.path.exists(TRIBLER_DIR):
         error('Default tribler installation directory (%s) does not exist. '
               'Tribler is probably not installed' % TRIBLER_DIR)
@@ -63,31 +75,28 @@ def check_tribler_directory():
 
 
 def run_tribler():
-    tribler_pids = get_tribler_pid()
-    if len(tribler_pids) > 0:
-        print 'Tribler is already running'
-    else:
-        print 'Starting tribler'
+    """ Runs Tribler """
+    if not get_tribler_pid():
+        print 'Starting tribler...'
         subprocess.Popen([TRIBLER_EXECUTABLE])
-
         # wait few seconds before it starts
-
         time.sleep(30)
-
         # check pid if tribler has started
-
-        tribler_pids = get_tribler_pid()
-        if len(tribler_pids) == 0:
+        if not get_tribler_pid():
             error('Tribler could not start properly')
+    else:
+        print 'Tribler is already running'
 
 
 def check_dot_tribler_dir():
+    """ Checks if .Tribler directory is present """
     print 'Checking if .Tribler directory exists'
     if not os.path.exists(TRIBLER_DOT_DIR):
         error('.Tribler directory does not exist. Installation was not successful')
 
 
 def check_tribler_core_is_running():
+    """ Checks if Tribler core is running """
     events_url = 'http://localhost:%d/events' % DEFAULT_PORT
     response = requests.get(events_url, stream=True)
     for event in response.iter_content(chunk_size=1024):
@@ -109,9 +118,7 @@ def check_tribler_core_is_running():
 
 
 def take_screenshots():
-    WORKSPACE_DIR = os.environ.get('WORKSPACE')
-    WORKSPACE_SCREENSHOT_DIR = os.path.join(WORKSPACE_DIR, 'screenshots'
-                                            )
+    """ Takes screenshots of the screen """
     if not os.path.exists(WORKSPACE_SCREENSHOT_DIR):
         print 'Creating screenshot directory'
         os.makedirs(WORKSPACE_SCREENSHOT_DIR)
