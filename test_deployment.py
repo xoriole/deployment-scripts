@@ -8,11 +8,14 @@ This script performs the following deployment tests for Tribler:
 - Check Tribler Core is running
 - Checks .Tribler state directory is created
 - Takes screenshots of the running state
+- Copies log files
 - Kills Tribler at the end
 """
 
+import errno
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -20,6 +23,7 @@ import time
 
 import mss
 import requests
+from requests import ConnectionError
 
 
 def error(msg):
@@ -83,6 +87,7 @@ def run_tribler():
         time.sleep(30)
         # check pid if tribler has started
         if not get_tribler_pid():
+            copy_log_files()
             error('Tribler could not start properly')
     else:
         print 'Tribler is already running'
@@ -97,24 +102,31 @@ def check_dot_tribler_dir():
 
 def check_tribler_core_is_running():
     """ Checks if Tribler core is running """
-    events_url = 'http://localhost:%d/events' % DEFAULT_PORT
-    response = requests.get(events_url, stream=True)
-    for event in response.iter_content(chunk_size=1024):
-        print 'event:%s' % event
-        event_json = json.loads(event)
+    try:
+        events_url = 'http://localhost:%d/events' % DEFAULT_PORT
+        response = requests.get(events_url, stream=True)
+        for event in response.iter_content(chunk_size=1024):
+            print 'event:%s' % event
+            event_json = json.loads(event)
 
-        # we are interested in the first event only which contains
-        # if tribler has started
+            # we are interested in the first event only which contains
+            # if tribler has started
 
-        try:
-            if not event_json[u'type'] == u'events_start' \
-                    and not event_json[u'event'][u'tribler_started']:
-                error('No tribler started event found. Tribler core has not started yet.')
-            else:
-                print 'Tribler core has started fine'
-        except KeyError:
-            error('KeyError: No tribler started event found')
-        break
+            try:
+                if not event_json[u'type'] == u'events_start' \
+                        and not event_json[u'event'][u'tribler_started']:
+                    copy_log_files()
+                    error('No tribler started event found. Tribler core has not started yet.')
+                else:
+                    print 'Tribler core has started fine'
+            except KeyError:
+                copy_log_files()
+                error('KeyError: No tribler started event found')
+            break
+
+    except ConnectionError as exception:
+        copy_log_files()
+        error(exception)
 
 
 def take_screenshots():
@@ -136,31 +148,51 @@ def take_screenshots():
             time.sleep(10)
 
 
+def copy_log_files():
+    """ Copies the tribler log files form .Tribler directory to Jenkins workspace"""
+    source_log_dir = os.path.join(TRIBLER_DOT_DIR, "logs")
+    if os.path.exists(source_log_dir):
+        target_log_dir = os.path.join(WORKSPACE_DIR, "logs")
+        try:
+            shutil.copytree(source_log_dir, target_log_dir)
+        except OSError as exc:  # python >2.5
+            if exc.errno == errno.ENOTDIR:
+                shutil.copy(source_log_dir, target_log_dir)
+            else:
+                error("Could not copy log files")
+
+
+def check_error_logs():
+    """ Checks if any error is logged """
+    error_log_file = os.path.join(TRIBLER_DOT_DIR, "logs", "tribler-error.log")
+    if os.path.isfile(error_log_file) and os.path.getsize(error_log_file) > 0:
+        error("There are some logged errors. Check log files")
+
+
 if __name__ == '__main__':
     # check if the directory & executable exists
-
     check_tribler_directory()
 
     # Run Tribler
-
     run_tribler()
 
     # Check tribler core is running
-
     check_tribler_core_is_running()
 
     # Check if .Tribler directory is present
-
     check_dot_tribler_dir()
 
     # Wait few seconds
-
     time.sleep(30)
 
     # take few screenshots of the running application state
-
     take_screenshots()
 
-    # Kill tribler
+    # Copy log files
+    copy_log_files()
 
+    # Check for error logs
+    check_error_logs()
+
+    # Kill tribler
     kill_tribler()
