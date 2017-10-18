@@ -14,6 +14,7 @@ This script performs the following deployment tests for Tribler:
 
 import errno
 import json
+import logging
 import os
 import shutil
 import signal
@@ -34,7 +35,7 @@ def error(msg):
 
 # Assuming the defaults
 DEFAULT_PORT = 8085
-WORKSPACE_DIR = os.environ.get('WORKSPACE')
+WORKSPACE_DIR = os.environ.get('WORKSPACE', '')
 WORKSPACE_SCREENSHOT_DIR = os.path.join(WORKSPACE_DIR, 'screenshots')
 
 if sys.platform == 'win32':
@@ -102,32 +103,43 @@ def check_dot_tribler_dir():
 
 def check_tribler_core_is_running():
     """ Checks if Tribler core is running """
-    try:
-        events_url = 'http://localhost:%d/events' % DEFAULT_PORT
-        response = requests.get(events_url, stream=True)
-        for event in response.iter_content(chunk_size=1024):
-            print 'event:%s' % event
-            event_json = json.loads(event)
 
-            # we are interested in the first event only which contains
-            # if tribler has started
+    backoff = 2     # backup factor
+    delay = 0.1     # 100ms
+    timeout = 120   # 120 seconds
+
+    starttime = time.time()
+    for _ in range(10):  # 10 attempts
+        try:
+            state_url = 'http://localhost:%d/state' % DEFAULT_PORT
+            response_json = json.loads(requests.get(state_url).text)
+            print "Tribler state: ", response_json
 
             try:
-                if not event_json[u'type'] == u'events_start' \
-                        and not event_json[u'event'][u'tribler_started']:
-                    copy_log_files()
-                    error('No tribler started event found. Tribler core has not started yet.')
-                else:
+                if response_json[u'state'] == u'STARTED' and not response_json[u'last_exception']:
                     print 'Tribler core has started fine'
+                else:
+                    error('Unexpected state response. Tribler core has not started yet.')
             except KeyError:
-                copy_log_files()
-                error('KeyError: No tribler started event found')
+                # copy_log_files()
+                error('KeyError: Unknown key in Tribler state response')
+
+            return
+
+        except ConnectionError as exception:
+            logging.error(exception)
+
+        duration = time.time() - starttime
+        if duration > timeout:
             break
+        else:
+            time.sleep(delay)
+            delay = delay * backoff  # back off exponentially
 
-    except ConnectionError as exception:
-        copy_log_files()
-        error(exception)
-
+    # Fail the test if there is any pending exception
+    e = sys.exc_info()[1]
+    if e is not None:
+        error(e.message)
 
 def take_screenshots():
     """ Takes screenshots of the screen """
