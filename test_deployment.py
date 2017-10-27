@@ -48,6 +48,13 @@ elif sys.platform == 'linux2':
     TRIBLER_EXECUTABLE = r"/usr/bin/tribler"
     TRIBLER_DOT_DIR = os.path.expanduser('~/.Tribler')
     TRIBLER_PROCESS = r"/usr/bin/tribler"
+elif sys.platform == 'darwin':
+    TRIBLER_DIR = os.path.join(WORKSPACE_DIR, "Tribler.app")
+    TRIBLER_EXECUTABLE = os.path.join(TRIBLER_DIR, "Contents", "MacOS", "tribler")
+    TRIBLER_DOT_DIR = os.path.expanduser('~/.Tribler')
+    TRIBLER_PROCESS = os.path.join(TRIBLER_DIR, "Contents", "MacOS", "tribler")
+else:
+    error("Unknown platform. Exiting...")
 
 
 def get_tribler_pid():
@@ -61,6 +68,12 @@ def get_tribler_pid():
     elif sys.platform == 'win32':
         return [item.split()[1] for item in os.popen('tasklist').read().splitlines()[4:] if
                 'tribler.exe' in item.split()]
+    elif sys.platform == 'darwin':
+        pids = []
+        for proc in subprocess.check_output(['ps', '-ef']).splitlines():
+            if TRIBLER_EXECUTABLE in proc:
+                pids += [int(proc.split()[1])]
+        return pids
 
 
 def kill_tribler():
@@ -76,7 +89,7 @@ def check_tribler_directory():
         error('Default tribler installation directory (%s) does not exist. '
               'Tribler is probably not installed' % TRIBLER_DIR)
     if not os.path.exists(TRIBLER_EXECUTABLE):
-        error('Tribler executable file not found')
+        error('Tribler executable file not found: %s' % TRIBLER_EXECUTABLE)
 
 
 def run_tribler():
@@ -93,6 +106,10 @@ def run_tribler():
     else:
         print 'Tribler is already running'
 
+def remove_dot_tribler_directory():
+    """ Remove .Tribler directory if exists """
+    if os.path.exists(TRIBLER_DOT_DIR):
+        shutil.rmtree(TRIBLER_DOT_DIR)
 
 def check_dot_tribler_dir():
     """ Checks if .Tribler directory is present """
@@ -137,9 +154,9 @@ def check_tribler_core_is_running():
             delay = delay * backoff  # back off exponentially
 
     # Fail the test if there is any pending exception
-    e = sys.exc_info()[1]
-    if e is not None:
-        error(e.message)
+    pending_exception = sys.exc_info()[1]
+    if pending_exception is not None:
+        error(pending_exception.message)
 
 def take_screenshots():
     """ Takes screenshots of the screen """
@@ -148,12 +165,20 @@ def take_screenshots():
         os.makedirs(WORKSPACE_SCREENSHOT_DIR)
 
     with mss.mss() as sct:
+        original_width = sct.monitors[1]['width']
+        original_height = sct.monitors[1]['height']
+
         for i in range(1, 11):
             print 'Taking screenshot %d/%d' % (i, 10)
             file_path = os.path.join(WORKSPACE_SCREENSHOT_DIR,
                                      'screenshot-' + time.strftime('%Y%m%d%H%M%S-')
                                      + str(i) + '.png')
-            sct.shot(output=file_path)
+            try:
+                sct.monitors[1]['width'] = original_width
+                sct.monitors[1]['height'] = original_height
+                sct.shot(output=file_path)
+            except mss.exception.ScreenShotError:
+                print "Failed to take screenshot in %s. Continuing anyway" % sys.platform
 
             # wait 10 seconds before new screenshot
 
@@ -184,6 +209,9 @@ def check_error_logs():
 if __name__ == '__main__':
     # check if the directory & executable exists
     check_tribler_directory()
+
+    # Remove .Tribler directory
+    remove_dot_tribler_directory()
 
     # Run Tribler
     run_tribler()
