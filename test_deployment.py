@@ -203,7 +203,10 @@ def check_error_logs():
     """ Checks if any error is logged """
     error_log_file = os.path.join(TRIBLER_DOT_DIR, "logs", "tribler-error.log")
     if os.path.isfile(error_log_file) and os.path.getsize(error_log_file) > 0:
-        error("There are some logged errors. Check log files")
+        with open(error_log_file, 'r') as f:
+            for line in f:
+                if 'Traceback' in line:
+                    error("There are some logged errors. Check log files")
 
 
 if __name__ == '__main__':
