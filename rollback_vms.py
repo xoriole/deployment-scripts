@@ -7,7 +7,9 @@ import sys
 import time
 from pyproxmox import prox_auth, pyproxmox
 
+
 def print_env_variables():
+    """ Print environment variables for debugging purposes """
     host = os.environ.get("PROXMOX_HOST")
     user = os.environ.get("PROXMOX_USER")
     password = os.environ.get("PROXMOX_PASS")
@@ -20,18 +22,31 @@ def print_env_variables():
     print "Rollback State : %s" % rollback_state
     print "VM IDs: %s" % vmids
 
+
 def rollback_vm(vm_id):
-    a = prox_auth(os.environ.get("PROXMOX_HOST"), os.environ.get("PROXMOX_USER"), os.environ.get("PROXMOX_PASS"))
-    b = pyproxmox(a)
-    rollback_upid = b.rollbackVirtualMachine("proxmox", vm_id, os.environ.get("PROXMOX_ROLLBACK_STATE"))['data']
+    """ Rollback and restart the virtual machine """
+    auth = prox_auth(os.environ.get("PROXMOX_HOST"), os.environ.get("PROXMOX_USER"),
+                     os.environ.get("PROXMOX_PASS"))
+    proxmox = pyproxmox(auth)
 
-    status = b.getNodeTaskStatusByUPID("proxmox", rollback_upid)['data']['status']
+    # Rollback the machine and wait until the machine is stopped
+    print "Initiating rollback to state['%s']" % os.environ.get("PROXMOX_ROLLBACK_STATE")
+    rollback_upid = proxmox.rollbackVirtualMachine("proxmox", vm_id,
+                                                   os.environ.get("PROXMOX_ROLLBACK_STATE"))['data']
+    status = proxmox.getNodeTaskStatusByUPID("proxmox", rollback_upid)['data']['status']
     while status == u"running":
-        time.sleep(0.5)
-        status = b.getNodeTaskStatusByUPID("proxmox", rollback_upid)['data']['status']
+        time.sleep(1)
+        status = proxmox.getNodeTaskStatusByUPID("proxmox", rollback_upid)['data']['status']
+        print "Waiting for machine to shutdown"
 
-    print "rollback done, restarting machine"
-    b.startVirtualMachine("proxmox", vm_id)
+    # Start the machine again and wait until it is running again
+    print "Rollback complete, restarting machine"
+    proxmox.startVirtualMachine("proxmox", vm_id)
+    status = proxmox.getVirtualStatus("proxmox", vm_id)['data']['status']
+    while status == u"stopped":
+        time.sleep(1)
+        status = proxmox.getVirtualStatus("proxmox", vm_id)['data']['status']
+        print "Waiting for machine to come online"
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == "show_env":
@@ -39,5 +54,5 @@ if __name__ == '__main__':
         print_env_variables()
 
     # Rollback the vm state
-    for vm_id in os.environ.get("PROXMOX_VMIDS").split(','):
-        rollback_vm(int(vm_id))
+    for vm_id_str in os.environ.get("PROXMOX_VMIDS").split(','):
+        rollback_vm(int(vm_id_str))
