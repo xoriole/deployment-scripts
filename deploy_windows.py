@@ -13,6 +13,11 @@ def error(msg):
     print "ERROR: %s" % msg
     sys.exit(1)
 
+def uninstall_old_tribler():
+    uninstaller_path = r"C:\Program Files\Tribler\Uninstall.exe"
+    if os.path.exists(uninstaller_path):
+        print "Uninstaller exists at %s" % uninstaller_path
+        os.system("%s /S" % uninstaller_path)
 
 def fetch_exe_from_jenkins():
     """
@@ -53,7 +58,10 @@ def fetch_exe_from_jenkins():
 # Step 1: fetch the latest Tribler installer from Jenkins
 installer_path = fetch_exe_from_jenkins()
 
-# Step 2: run the installer
+# Step 2: Uninstall previous installation if present
+uninstall_old_tribler()
+
+# Step 3: run the installer
 os.system("%s /S" % installer_path)
 
 print "Installed Tribler..."
