@@ -96,9 +96,11 @@ def run_tribler():
     """ Runs Tribler """
     if not get_tribler_pid():
         print 'Starting tribler...'
-        subprocess.Popen([TRIBLER_EXECUTABLE])
+        proc = subprocess.Popen(TRIBLER_EXECUTABLE, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         # wait few seconds before it starts
         time.sleep(30)
+        print "pid:", proc.pid
+        print "returncode:", proc.returncode
         # check pid if tribler has started
         if not get_tribler_pid():
             copy_log_files()

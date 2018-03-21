@@ -77,6 +77,11 @@ if __name__ == '__main__':
         DPKG_UNLOCK_SCRIPT = "echo %s| sudo -S rm /var/lib/dpkg/lock" % TRIBLER_PASSWORD
         os.system(DPKG_UNLOCK_SCRIPT)
 
+    # Step 3: Remove Tribler if it already exists
+    if os.path.exists("/usr/share/tribler"):
+        UNINSTALLATION_SCRIPT = "echo %s| sudo -S apt-get autoremove -y tribler" % TRIBLER_PASSWORD
+        os.system(UNINSTALLATION_SCRIPT)
+
     # One step installation
     INSTALLATION_SCRIPT = "echo %s| sudo -S apt install -y %s" % (TRIBLER_PASSWORD, INSTALLER_PATH)
     os.system(INSTALLATION_SCRIPT)
