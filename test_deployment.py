@@ -95,7 +95,7 @@ def check_tribler_directory():
 def run_tribler():
     """ Runs Tribler """
     if not get_tribler_pid():
-        print 'Starting tribler...'
+        print 'Starting Tribler executable [%s]...' % TRIBLER_EXECUTABLE
         subprocess.Popen([TRIBLER_EXECUTABLE])
         # wait few seconds before it starts
         time.sleep(30)
