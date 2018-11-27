@@ -1,63 +1,30 @@
 """
-This script installs and tests Tribler on a Windows machine.
+This script fetches the latest build executable for Win64 from Jenkins
+and installs it. Note that it expects the following environment
+variable:
+- JENKINS_JOB_URL : Jenkins job which builds the Debian package
+- BUILD_TYPE : Build type [Win64, Win32, Linux, MacOS]
+- WORKSPACE : Jenkins workspace (set by jenkins itself)
 """
-import json
 import os
-import sys
-
-import requests
 import time
 
+from deployment_utils import fetch_latest_build_artifact, print_and_exit
 
-def error(msg):
-    print "ERROR: %s" % msg
-    sys.exit(1)
+if __name__ == '__main__':
+    start_time = time.time()
 
+    # Step 1: fetch the latest Tribler installer from Jenkins
+    build_type = os.environ.get('BUILD_TYPE', 'Win64')
+    job_url = os.environ.get('JENKINS_JOB_URL', None)
+    if not job_url:
+        print_and_exit('JENKINS_JOB_URL is not set')
 
-def fetch_exe_from_jenkins():
-    """
-    This method fetches the latest .exe from Jenkins.
-    First, it checks the id of the latest build.
-    Next, it fetches the artifacts from that build and saves the .exe to the workspace.
-    """
-    base_job_url = os.environ.get("JENKINS_JOB_URL")
-    if not base_job_url:
-        print "Jenkins job URL for the builder is not specified."
-        sys.exit(-1)
+    INSTALLER_FILE = fetch_latest_build_artifact(job_url, build_type)
 
-    build_json = json.loads(requests.get("%s/api/json" % base_job_url).text)
-    last_build = build_json['lastCompletedBuild']['number']
-    print "Last build ID: %d" % last_build
+    # Step 2: run the installer
+    os.system("%s /S" % INSTALLER_FILE)
 
-    job_url = '%s/%d' % (base_job_url, last_build)
-    last_build_json = json.loads(requests.get("%s/api/json" % job_url).text)
-    if len(last_build_json['artifacts']) == 0:
-        error("No artifacts found!")
-
-    artifact_url = "%s/artifact/%s" % (job_url, last_build_json['artifacts'][0]['relativePath'])
-    file_name = last_build_json['artifacts'][0]['fileName']
-    print "Tribler installer url: %s" % artifact_url
-
-    # Download the file
-    file_path = os.path.join(os.environ.get('WORKSPACE'), file_name)
-    download_response = requests.get(artifact_url, stream=True)
-    download_response.raise_for_status()
-
-    with open(file_path, 'wb') as handle:
-        for block in download_response.iter_content(1024):
-            handle.write(block)
-
-    return file_path
-
-
-# Step 1: fetch the latest Tribler installer from Jenkins
-installer_path = fetch_exe_from_jenkins()
-
-# Step 2: run the installer
-os.system("%s /S" % installer_path)
-
-print "Installed Tribler..."
-
-time.sleep(5)
-
-# TODO run Tribler + check whether it's up and running
+    diff_time = time.time() - start_time
+    print 'Installed Tribler in %s in %s seconds' % (build_type, diff_time)
+    time.sleep(1)
