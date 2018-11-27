@@ -78,7 +78,7 @@ if __name__ == '__main__':
         os.system(DPKG_UNLOCK_SCRIPT)
 
     # One step installation
-    INSTALLATION_SCRIPT = "echo %s| sudo -S apt install -y %s" % (TRIBLER_PASSWORD, INSTALLER_PATH)
+    INSTALLATION_SCRIPT = "echo %s| sudo -S apt install -y --allow-downgrades %s" % (TRIBLER_PASSWORD, INSTALLER_PATH)
     os.system(INSTALLATION_SCRIPT)
 
     print 'Installed Tribler...'
