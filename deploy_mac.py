@@ -15,7 +15,7 @@ if __name__ == '__main__':
     start_time = time.time()
 
     # Step 1: fetch the latest Tribler installer from Jenkins
-    build_type = os.environ.get('BUILD_TYPE', 'Linux')
+    build_type = os.environ.get('BUILD_TYPE', 'MacOS')
     job_url = os.environ.get('JENKINS_JOB_URL', None)
     if not job_url:
         print_and_exit('JENKINS_JOB_URL is not set')
