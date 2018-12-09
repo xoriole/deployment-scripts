@@ -3,6 +3,7 @@ Utility script to fetch the latest build artifact from Jenkins. It expects the f
 Not it expects following environment variables:
 - WORKSPACE : Jenkins workspace (set by jenkins itself)
 """
+from __future__ import print_function
 
 import json
 import os
@@ -12,7 +13,7 @@ import requests
 
 
 def print_and_exit(msg):
-    print 'ERROR: %s' % msg
+    print('ERROR: %s' % msg)
     sys.exit(1)
 
 

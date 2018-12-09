@@ -10,6 +10,7 @@ variable be provided:
 - WORKSPACE : Jenkins workspace (set by jenkins itself)
 - TRIBLER_PASSWORD : Local user password
 """
+from __future__ import print_function
 import os
 import time
 
@@ -37,5 +38,5 @@ if __name__ == '__main__':
     os.system(INSTALLATION_SCRIPT)
 
     diff_time = time.time() - start_time
-    print 'Installed Tribler in Linux in %s seconds' % diff_time
+    print('Installed Tribler in Linux in %s seconds' % diff_time)
     time.sleep(1)

@@ -1,6 +1,7 @@
 """
 This script rollbacks specific VMs.
 """
+from __future__ import print_function
 import os
 import sys
 
@@ -16,11 +17,11 @@ def print_env_variables():
     rollback_state = os.environ.get("PROXMOX_ROLLBACK_STATE")
     vmids = os.environ.get("PROXMOX_VMIDS")
 
-    print "Host: %s" % host
-    print "User: %s" % user
-    print "Password: %s" % password
-    print "Rollback State : %s" % rollback_state
-    print "VM IDs: %s" % vmids
+    print("Host: %s" % host)
+    print("User: %s" % user)
+    print("Password: %s" % password)
+    print("Rollback State : %s" % rollback_state)
+    print("VM IDs: %s" % vmids)
 
 
 def rollback_vm(vm_id):
@@ -30,23 +31,23 @@ def rollback_vm(vm_id):
     proxmox = pyproxmox(auth)
 
     # Rollback the machine and wait until the machine is stopped
-    print "Initiating rollback to state['%s']" % os.environ.get("PROXMOX_ROLLBACK_STATE")
+    print("Initiating rollback to state['%s']" % os.environ.get("PROXMOX_ROLLBACK_STATE"))
     rollback_upid = proxmox.rollbackVirtualMachine("proxmox", vm_id,
                                                    os.environ.get("PROXMOX_ROLLBACK_STATE"))['data']
     status = proxmox.getNodeTaskStatusByUPID("proxmox", rollback_upid)['data']['status']
     while status == u"running":
         time.sleep(1)
         status = proxmox.getNodeTaskStatusByUPID("proxmox", rollback_upid)['data']['status']
-        print "Waiting for machine to shutdown"
+        print("Waiting for machine to shutdown")
 
     # Start the machine again and wait until it is running again
-    print "Rollback complete, restarting machine"
+    print("Rollback complete, restarting machine")
     proxmox.startVirtualMachine("proxmox", vm_id)
     status = proxmox.getVirtualStatus("proxmox", vm_id)['data']['status']
     while status == u"stopped":
         time.sleep(1)
         status = proxmox.getVirtualStatus("proxmox", vm_id)['data']['status']
-        print "Waiting for machine to come online"
+        print("Waiting for machine to come online")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == "show_env":

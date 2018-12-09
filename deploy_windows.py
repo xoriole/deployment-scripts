@@ -6,6 +6,7 @@ variable:
 - BUILD_TYPE : Build type [Win64, Win32, Linux, MacOS]
 - WORKSPACE : Jenkins workspace (set by jenkins itself)
 """
+from __future__ import print_function
 import os
 import time
 
@@ -26,5 +27,5 @@ if __name__ == '__main__':
     os.system("%s /S" % INSTALLER_FILE)
 
     diff_time = time.time() - start_time
-    print 'Installed Tribler in %s in %s seconds' % (build_type, diff_time)
+    print('Installed Tribler in %s in %s seconds' % (build_type, diff_time))
     time.sleep(1)
