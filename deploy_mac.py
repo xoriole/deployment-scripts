@@ -5,6 +5,7 @@ It expects the following environment variable be provided:
 - BUILD_TYPE : Build type [Win64, Win32, Linux, MacOS]
 - WORKSPACE : Jenkins workspace (set by jenkins itself)
 """
+from __future__ import print_function
 
 import os
 import time
@@ -27,23 +28,23 @@ if __name__ == '__main__':
     # Step 2: Mount the dmg file
     # Convert .dmg to cdr to bypass EULA
     CONVERT_COMMAND = "hdiutil convert %s -format UDTO -o %s" % (INSTALLER_FILE, CDR_PATH)
-    print CONVERT_COMMAND
+    print(CONVERT_COMMAND)
     os.system(CONVERT_COMMAND)
 
     ATTACH_COMMAND = "hdiutil attach %s" % CDR_PATH
-    print ATTACH_COMMAND
+    print(ATTACH_COMMAND)
     os.system(ATTACH_COMMAND)
 
     # Step 3: Copy the Tribler.app to workspace
     COPY_COMMAND = "cp -R /Volumes/Tribler/Tribler.app %s" % os.environ.get('WORKSPACE')
-    print COPY_COMMAND
+    print(COPY_COMMAND)
     os.system(COPY_COMMAND)
 
     # Step 4: Unmount Tribler volume
     DETACH_COMMAND = "hdiutil detach /Volumes/Tribler"
-    print DETACH_COMMAND
+    print(DETACH_COMMAND)
     os.system(DETACH_COMMAND)
 
     diff_time = time.time() - start_time
-    print 'Installed Tribler in MacOS in %s seconds' % diff_time
+    print('Installed Tribler in MacOS in %s seconds' % diff_time)
     time.sleep(1)

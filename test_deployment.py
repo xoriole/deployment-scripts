@@ -11,6 +11,7 @@ This script performs the following deployment tests for Tribler:
 - Copies log files
 - Kills Tribler at the end
 """
+from __future__ import print_function
 
 import errno
 import json
@@ -29,7 +30,7 @@ from requests import ConnectionError
 
 def error(msg):
     """ Prints error and exits """
-    print 'ERROR: %s' % msg
+    print('ERROR: %s' % msg)
     sys.exit(-1)
 
 
@@ -95,7 +96,7 @@ def check_tribler_directory():
 def run_tribler():
     """ Runs Tribler """
     if not get_tribler_pid():
-        print 'Starting Tribler executable [%s]...' % TRIBLER_EXECUTABLE
+        print('Starting Tribler executable [%s]...' % TRIBLER_EXECUTABLE)
         subprocess.Popen([TRIBLER_EXECUTABLE])
         # wait few seconds before it starts
         time.sleep(30)
@@ -104,7 +105,7 @@ def run_tribler():
             copy_log_files()
             error('Tribler could not start properly')
     else:
-        print 'Tribler is already running'
+        print('Tribler is already running')
 
 def remove_dot_tribler_directory():
     """ Remove .Tribler directory if exists """
@@ -113,7 +114,7 @@ def remove_dot_tribler_directory():
 
 def check_dot_tribler_dir():
     """ Checks if .Tribler directory is present """
-    print 'Checking if .Tribler directory exists'
+    print('Checking if .Tribler directory exists')
     if not os.path.exists(TRIBLER_DOT_DIR):
         error('.Tribler directory does not exist. Installation was not successful')
 
@@ -130,11 +131,11 @@ def check_tribler_core_is_running():
         try:
             state_url = 'http://localhost:%d/state' % DEFAULT_PORT
             response_json = json.loads(requests.get(state_url).text)
-            print "Tribler state: ", response_json
+            print("Tribler state: ", response_json)
 
             try:
                 if response_json[u'state'] == u'STARTED' and not response_json[u'last_exception']:
-                    print 'Tribler core has started fine'
+                    print('Tribler core has started fine')
                 else:
                     error('Unexpected state response. Tribler core has not started yet.')
             except KeyError:
@@ -161,7 +162,7 @@ def check_tribler_core_is_running():
 def take_screenshots():
     """ Takes screenshots of the screen """
     if not os.path.exists(WORKSPACE_SCREENSHOT_DIR):
-        print 'Creating screenshot directory'
+        print('Creating screenshot directory')
         os.makedirs(WORKSPACE_SCREENSHOT_DIR)
 
     with mss.mss() as sct:
@@ -169,7 +170,7 @@ def take_screenshots():
         original_height = sct.monitors[1]['height']
 
         for i in range(1, 11):
-            print 'Taking screenshot %d/%d' % (i, 10)
+            print('Taking screenshot %d/%d' % (i, 10))
             file_path = os.path.join(WORKSPACE_SCREENSHOT_DIR,
                                      'screenshot-' + time.strftime('%Y%m%d%H%M%S-')
                                      + str(i) + '.png')
@@ -178,7 +179,7 @@ def take_screenshots():
                 sct.monitors[1]['height'] = original_height
                 sct.shot(output=file_path)
             except mss.exception.ScreenShotError:
-                print "Failed to take screenshot in %s. Continuing anyway" % sys.platform
+                print("Failed to take screenshot in %s. Continuing anyway" % sys.platform)
 
             # wait 10 seconds before new screenshot
 
