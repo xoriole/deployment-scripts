@@ -19,12 +19,11 @@ def print_and_exit(msg):
 
 def save_artifact_to_workspace(artifact_url, filename):
     file_path = os.path.join(os.environ.get('WORKSPACE'), filename)
-    download_response = requests.get(artifact_url, stream=True)
+    download_response = requests.get(artifact_url)
     download_response.raise_for_status()
 
     with open(file_path, 'wb') as handle:
-        for block in download_response.iter_content(1024):
-            handle.write(block)
+        handle.write(download_response.content)
     return file_path
 
 
