@@ -14,7 +14,7 @@ from __future__ import print_function
 import os
 import time
 
-from deployment_utils import fetch_latest_build_artifact, print_and_exit
+from deployment_utils import fetch_latest_build_artifact, print_and_exit, tribler_is_installed, check_sha256_hash
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -25,9 +25,13 @@ if __name__ == '__main__':
     if not job_url:
         print_and_exit('JENKINS_JOB_URL is not set')
 
-    INSTALLER_FILE = fetch_latest_build_artifact(job_url, build_type)
+    INSTALLER_FILE, HASH = fetch_latest_build_artifact(job_url, build_type)
 
-    # Step 2: Remove dpkg lock if exists
+    # Step 2: check SHA256 hash
+    if not check_sha256_hash(INSTALLER_FILE, HASH):
+        print_and_exit("SHA256 of file does not match with target hash %s" % HASH)
+
+    # Step 3: Remove dpkg lock if exists
     TRIBLER_PASSWORD = os.environ.get('TRIBLER_PASSWORD')
     if os.path.exists("/var/lib/dpkg/lock"):
         DPKG_UNLOCK_SCRIPT = "echo %s| sudo -S rm /var/lib/dpkg/lock" % TRIBLER_PASSWORD
@@ -40,3 +44,7 @@ if __name__ == '__main__':
     diff_time = time.time() - start_time
     print('Installed Tribler in Linux in %s seconds' % diff_time)
     time.sleep(1)
+
+    # Step 4: check whether Tribler has been correctly installed
+    if not tribler_is_installed():
+        print_and_exit('Tribler has not been correctly installed')

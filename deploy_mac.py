@@ -10,7 +10,7 @@ from __future__ import print_function
 import os
 import time
 
-from deployment_utils import fetch_latest_build_artifact, print_and_exit
+from deployment_utils import fetch_latest_build_artifact, print_and_exit, tribler_is_installed, check_sha256_hash
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -21,11 +21,15 @@ if __name__ == '__main__':
     if not job_url:
         print_and_exit('JENKINS_JOB_URL is not set')
 
-    INSTALLER_FILE = fetch_latest_build_artifact(job_url, build_type)
+    INSTALLER_FILE, HASH = fetch_latest_build_artifact(job_url, build_type)
     CDR_PATH = os.path.join(os.environ.get('WORKSPACE'), "Tribler.cdr")
     APP_PATH = os.path.join(os.environ.get('WORKSPACE'), "Tribler.app")
 
-    # Step 2: Mount the dmg file
+    # Step 2: check SHA256 hash
+    if not check_sha256_hash(INSTALLER_FILE, HASH):
+        print_and_exit("SHA256 of file does not match with target hash %s" % HASH)
+
+    # Step 3: Mount the dmg file
     # Convert .dmg to cdr to bypass EULA
     CONVERT_COMMAND = "hdiutil convert %s -format UDTO -o %s" % (INSTALLER_FILE, CDR_PATH)
     print(CONVERT_COMMAND)
@@ -35,12 +39,12 @@ if __name__ == '__main__':
     print(ATTACH_COMMAND)
     os.system(ATTACH_COMMAND)
 
-    # Step 3: Copy the Tribler.app to workspace
+    # Step 4: Copy the Tribler.app to workspace
     COPY_COMMAND = "cp -R /Volumes/Tribler/Tribler.app %s" % os.environ.get('WORKSPACE')
     print(COPY_COMMAND)
     os.system(COPY_COMMAND)
 
-    # Step 4: Unmount Tribler volume
+    # Step 5: Unmount Tribler volume
     DETACH_COMMAND = "hdiutil detach /Volumes/Tribler"
     print(DETACH_COMMAND)
     os.system(DETACH_COMMAND)
@@ -48,3 +52,7 @@ if __name__ == '__main__':
     diff_time = time.time() - start_time
     print('Installed Tribler in MacOS in %s seconds' % diff_time)
     time.sleep(1)
+
+    # Step 6: check whether Tribler has been correctly installed
+    if not tribler_is_installed():
+        print_and_exit('Tribler has not been correctly installed')

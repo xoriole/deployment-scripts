@@ -10,7 +10,7 @@ from __future__ import print_function
 import os
 import time
 
-from deployment_utils import fetch_latest_build_artifact, print_and_exit
+from deployment_utils import fetch_latest_build_artifact, print_and_exit, tribler_is_installed, check_sha256_hash
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -21,11 +21,22 @@ if __name__ == '__main__':
     if not job_url:
         print_and_exit('JENKINS_JOB_URL is not set')
 
-    INSTALLER_FILE = fetch_latest_build_artifact(job_url, build_type)
+    INSTALLER_FILE, HASH = fetch_latest_build_artifact(job_url, build_type)
 
-    # Step 2: run the installer
+    # Step 2: check SHA256 hash
+    if not check_sha256_hash(INSTALLER_FILE, HASH):
+        print("SHA256 of file does not match with target hash %s, we retry to download it" % HASH)
+        INSTALLER_FILE, HASH = fetch_latest_build_artifact(job_url, build_type)
+        if not check_sha256_hash(INSTALLER_FILE, HASH):
+            print_and_exit("Download seems to be really broken, bailing out")
+
+    # Step 3: run the installer
     os.system("%s /S" % INSTALLER_FILE)
 
     diff_time = time.time() - start_time
     print('Installed Tribler in %s in %s seconds' % (build_type, diff_time))
     time.sleep(1)
+
+    # Step 4: check whether Tribler has been correctly installed
+    if not tribler_is_installed():
+        print_and_exit('Tribler has not been correctly installed')
