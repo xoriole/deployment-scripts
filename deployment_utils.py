@@ -53,3 +53,26 @@ def fetch_latest_build_artifact(job_url, build_type):
         return save_artifact_to_workspace(artifact_url, artifacts[0]['fileName'])
 
     print_and_exit("Artifact type not selected. Supported types are [Win64, Win32, Linux, MacOS]")
+
+
+def tribler_is_installed():
+    """
+    Check whether Tribler has been correctly installed on the various platforms.
+    """
+    WORKSPACE_DIR = os.environ.get('WORKSPACE', '')
+    if sys.platform == 'win32':
+        TRIBLER_DIR = r"C:\Program Files\Tribler"
+        TRIBLER_EXECUTABLE = r"C:\Program Files\Tribler\tribler.exe"
+    elif sys.platform == 'linux2':
+        TRIBLER_DIR = r"/usr/share/tribler"
+        TRIBLER_EXECUTABLE = r"/usr/bin/tribler"
+    elif sys.platform == 'darwin':
+        TRIBLER_DIR = os.path.join(WORKSPACE_DIR, "Tribler.app")
+        TRIBLER_EXECUTABLE = os.path.join(TRIBLER_DIR, "Contents", "MacOS", "tribler")
+    else:
+        return False
+
+    if not os.path.exists(TRIBLER_DIR) or not os.path.exists(TRIBLER_EXECUTABLE):
+        return False
+
+    return True

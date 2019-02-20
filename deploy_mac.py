@@ -10,7 +10,7 @@ from __future__ import print_function
 import os
 import time
 
-from deployment_utils import fetch_latest_build_artifact, print_and_exit
+from deployment_utils import fetch_latest_build_artifact, print_and_exit, tribler_is_installed
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -48,3 +48,7 @@ if __name__ == '__main__':
     diff_time = time.time() - start_time
     print('Installed Tribler in MacOS in %s seconds' % diff_time)
     time.sleep(1)
+
+    # Step 5: check whether Tribler has been correctly installed
+    if not tribler_is_installed():
+        print_and_exit('Tribler has not been correctly installed')
