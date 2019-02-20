@@ -25,7 +25,10 @@ if __name__ == '__main__':
 
     # Step 2: check SHA256 hash
     if not check_sha256_hash(INSTALLER_FILE, HASH):
-        print_and_exit("SHA256 of file does not match with target hash %s" % HASH)
+        print("SHA256 of file does not match with target hash %s, we retry to download it" % HASH)
+        INSTALLER_FILE, HASH = fetch_latest_build_artifact(job_url, build_type)
+        if not check_sha256_hash(INSTALLER_FILE, HASH):
+            print_and_exit("Download seems to be really broken, bailing out")
 
     # Step 3: run the installer
     os.system("%s /S" % INSTALLER_FILE)
