@@ -30,13 +30,19 @@ if __name__ == '__main__':
         if not check_sha256_hash(INSTALLER_FILE, HASH):
             print_and_exit("Download seems to be really broken, bailing out")
 
-    # Step 3: run the installer
-    os.system("%s /S" % INSTALLER_FILE)
+    success_install = False
+    for _ in range(5):
+        # Step 3: run the installer
+        os.system("%s /S" % INSTALLER_FILE)
 
-    diff_time = time.time() - start_time
-    print('Installed Tribler in %s in %s seconds' % (build_type, diff_time))
-    time.sleep(1)
+        diff_time = time.time() - start_time
+        print('Installed Tribler in %s in %s seconds' % (build_type, diff_time))
+        time.sleep(1)
 
-    # Step 4: check whether Tribler has been correctly installed
-    if not tribler_is_installed():
+        # Step 4: check whether Tribler has been correctly installed
+        if tribler_is_installed():
+            success_install = True
+            break
+
+    if not success_install:
         print_and_exit('Tribler has not been correctly installed')
