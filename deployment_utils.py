@@ -94,7 +94,7 @@ def tribler_is_installed():
     if sys.platform == 'win32':
         TRIBLER_DIR = r"C:\Program Files\Tribler"
         TRIBLER_EXECUTABLE = r"C:\Program Files\Tribler\tribler.exe"
-    elif sys.platform == 'linux2':
+    elif sys.platform.startswith('linux'):
         TRIBLER_DIR = r"/usr/share/tribler"
         TRIBLER_EXECUTABLE = r"/usr/bin/tribler"
     elif sys.platform == 'darwin':
