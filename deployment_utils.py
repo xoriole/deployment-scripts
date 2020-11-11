@@ -11,6 +11,7 @@ import os
 import sys
 
 import requests
+import sentry_sdk
 
 
 def print_and_exit(msg):
@@ -107,3 +108,13 @@ def tribler_is_installed():
         return False
 
     return True
+
+
+def init_sentry():
+    """ Inits the sentry sdk by setting up a URL and a trace sample rate
+
+    To change the URL, please specify a corresponding ENV variable.
+
+    If `SENTRY_URL` is not set, then Sentry error reporting will be disabled.
+    """
+    sentry_sdk.init(os.environ.get('SENTRY_URL'), traces_sample_rate=1.0)
