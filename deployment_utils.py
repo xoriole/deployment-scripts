@@ -117,4 +117,4 @@ def init_sentry():
 
     If `SENTRY_URL` is not set, then Sentry error reporting will be disabled.
     """
-    sentry_sdk.init(os.environ.get('SENTRY_URL'), traces_sample_rate=1.0)
+    sentry_sdk.init(os.environ.get('SENTRY_URL'), traces_sample_rate=1.0, debug=True)
