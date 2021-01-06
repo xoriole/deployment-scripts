@@ -51,7 +51,8 @@ def check_sha256_hash(file_path, target_sha256_hash):
 
 def get_artifact_extension(build_type):
     build_type = build_type.lower()
-    return '.exe' if build_type in ['win64', 'win32'] \
+    return '_x64.exe' if build_type == 'win64' \
+        else 'x86.exe' if build_type == 'win32' \
         else '.deb' if build_type == 'linux' \
         else '.dmg' if build_type == 'macos' \
         else None
